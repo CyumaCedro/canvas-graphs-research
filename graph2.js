@@ -25,6 +25,8 @@ class stat_ball {
     this.pos_y = pos_y;
     //---
     this.#draw_The_stat_ball();
+    //---
+    console.log(this.max_val);
   }
 
   //--Private function
@@ -33,7 +35,7 @@ class stat_ball {
     this.ctx.arc(
       this.pos_x,
       this.pos_y,
-      (this.size * this.val) / this.max_val,
+      (this.val / this.max_val) * this.size,
       0,
       2 * Math.PI,
       false
@@ -51,8 +53,8 @@ class stat_ball {
     return {
       x: this.pos_x,
       y: this.pos_y,
-      radius: (this.size * this.val) / this.max_val,
-      value: this.val,
+      radius: 10,
+      value: this.val
     };
   }
 }
@@ -64,7 +66,7 @@ class stat_legend_text {
     fontSize = 14,
     fontColor = [
       { percentage: "0.2", color: "magenta" },
-      { percentage: "0.8", color: "green" },
+      { percentage: "0.8", color: "green" }
     ],
     font = "serif",
     width = 100,
@@ -211,38 +213,228 @@ class draw_ball_hover {
     elemDiv.style.height = `30px`;
   }
 }
+//--Draw X and Y axis--
+class stat_xY_axis {
+  constructor(ctx, cols, rows, width, height) {
+    this.ctx = ctx;
+    //---
+    this.options = {
+      cols: cols,
+      rows: rows,
+      width: width * 0.8,
+      height: height * 0.8
+    };
+    //--
+    this.XyCoordinates = [];
+    this.#createCanvasGrid(this.options);
+  }
+
+  //--Private function
+  #createCanvasGrid(options) {
+    let ctx = this.ctx;
+
+    // canvas.width = options.width;
+    // canvas.height = options.height;
+    // canvas.style.border = "1px solid red"
+
+    ctx.translate(0.15 * options.width, 0.15 * options.height); // https://stackoverflow.com/a/13294650/1762224
+
+    ctx.beginPath();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "chocolate";
+
+    let offsetX = Math.floor(options.width / options.cols);
+    let offsetY = Math.floor(options.height / options.rows);
+    //---
+    this.offsetX = offsetX;
+    this.offsetY = offsetY;
+
+    for (let x = 0; x < options.width; x += offsetX) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, options.height - options.height * 0.005);
+      //---Record coordinates
+    }
+    //--------
+    for (let y = 0; y < options.height; y += offsetY) {
+      ctx.moveTo(0, y);
+      ctx.lineTo(options.width + options.width * 0.05, y);
+      //--REcord coordinates
+    }
+    //---Grid coordinates--
+    for (let x = 0; x < options.width; x += offsetX) {
+      //ctx.moveTo(x, 0);
+      //ctx.lineTo(x, options.height-options.height*0.005);
+      var rows = [];
+      //---Record coordinates
+      for (let y = 0; y < options.height; y += offsetY) {
+        //ctx.moveTo(0, y);
+        //ctx.lineTo(options.width+options.width*0.05, y);
+        //--REcord coordinates
+        rows.push([x, y]);
+      }
+      //---
+      this.XyCoordinates.push(rows);
+    }
+    //---
+
+    ctx.stroke();
+    //---
+    ctx.translate(-0.15 * options.width, -0.15 * options.height);
+
+    return canvas;
+  }
+  //---The params of the grid
+  params_of_the_grid() {
+    return {
+      offsetX: this.offsetX,
+      offsetY: this.offsetY,
+      canvasParams: this.options,
+      XyCoordinates: this.XyCoordinates,
+      translateCtx: [0.15 * this.options.width, 0.15 * this.options.height]
+    };
+  }
+}
 window.addEventListener("load", () => {
   const all_balls_pos = [];
   const canvas = document.querySelector("#canvas");
   const ctx = canvas.getContext("2d");
+  //--
+  function getArrayMax(array) {
+    return Math.max.apply(null, array);
+  }
+  function getArrayMin(array) {
+    return Math.min.apply(null, array);
+  }
+  const DataCoords = [
+    [200, 20, 30, 50, 60, 96, 200, 300, 50],
+    [150, 20, 30, 50, 60, 95, 200, 300, 50],
+    [10, 20, 30, 50, 60, 94, 200, 300, 50],
+    [10, 20, 30, 50, 60, 93, 200, 300, 50],
+    [10, 20, 30, 50, 60, 92, 200, 300, 50],
+    [17, 28, 39, 50, 60, 91, 200, 300, 50]
+  ];
+  //----
+  const DataCoords_VerticalLegend = [
+    "Action 1",
+    "Action 2",
+    "Action 3",
+    "Action 4",
+    "Action 5",
+    "Action 6",
+    "Action 7",
+    "Action 8",
+    "Action 9"
+  ];
+  const DataCoords_HorizontalLegend = [
+    "Week 1",
+    "Week 2",
+    "Week 3",
+    "Week 4",
+    "Week 5",
+    "Week 6"
+  ];
+  //--------
+  const x_axis_legend = DataCoords;
+  const y_axis_legend = DataCoords[0];
+  //-----------
+  let max_value = 0;
+  let max = [];
+  for (var i = 0; i < DataCoords.length; i++) {
+    for (var n = 0; n < DataCoords[i].length; n++) {
+      console.log(getArrayMax(DataCoords[i]));
+      max.push(getArrayMax(DataCoords[i]));
+    }
+  }
+  //-----
+  max_value = getArrayMax(max);
 
   //--Resizing
-  canvas.height = window.innerHeight * 0.4;
-  canvas.width = window.innerWidth * 0.4;
-  //--Draw a ball--
-  //console.log(ball_posXy);
-  //--Write a text--
-  const txt = new stat_legend_text(ctx);
-  //--Draw a hover--
-
-  //--Another ball--
-  const ball1 = new stat_ball(
+  canvas.height = window.innerHeight * 0.5;
+  canvas.width = window.innerWidth * 0.5;
+  //--Draw grid--
+  const grid = new stat_xY_axis(
     ctx,
-    1,
-    400,
-    300,
-    0,
-    "black",
-    "green",
-    50,
-    80,
-    20,
-    [100, 0, 140, 0.6]
+    x_axis_legend.length,
+    y_axis_legend.length,
+    canvas.width,
+    canvas.height
   );
-  all_balls_pos.push(ball1.getstatBallYx());
+  const gridConfigs = grid.params_of_the_grid();
+  //console.log(ball_posXy);
+  //---
+  //--Write a text--
+  //const txt = new stat_legend_text(ctx);
+  //--Draw a hover--
+  console.log(gridConfigs);
+  let textGridCounterY = 0;
+  //ctx.translate(gridConfigs.translateCtx[0], gridConfigs.translateCtx[1]);
+  for (var i = 0; i < gridConfigs.XyCoordinates.length - 1; i++) {
+    for (var n = 0; n < gridConfigs.XyCoordinates[i].length - 1; n++) {
+      let ball = new stat_ball(
+        ctx,
+        1,
+        max_value,
+        DataCoords[i][n],
+        0,
+        "black",
+        "black",
+        gridConfigs.XyCoordinates[i][n][0] +
+          gridConfigs.offsetX +
+          gridConfigs.translateCtx[0],
+        gridConfigs.XyCoordinates[i][n][1] + gridConfigs.translateCtx[1],
+        gridConfigs.offsetY / 2,
+        [100, 0, 140, 0.6]
+      );
+
+      all_balls_pos.push(ball.getstatBallYx());
+      //--- Draw col legend
+      if (i == 0) {
+        new stat_legend_text(
+          ctx,
+          DataCoords_VerticalLegend[n],
+          14,
+          [
+            { percentage: "0.2", color: "black" },
+            { percentage: "0.8", color: "black" }
+          ],
+          "serif",
+          (width = gridConfigs.offsetX / 2),
+          gridConfigs.XyCoordinates[0][n][0] +
+            gridConfigs.translateCtx[0] -
+            gridConfigs.offsetX * 0.8,
+          gridConfigs.XyCoordinates[i][0][1] +
+            textGridCounterY +
+            gridConfigs.translateCtx[1]
+        );
+        //---
+        textGridCounterY += gridConfigs.offsetY;
+      }
+    }
+    //---- Draw row legend
+    new stat_legend_text(
+      ctx,
+      DataCoords_HorizontalLegend[i],
+      14,
+      [
+        { percentage: "0.2", color: "green" },
+        { percentage: "0.8", color: "green" }
+      ],
+      "serif",
+      (width = gridConfigs.offsetX / 2),
+      gridConfigs.XyCoordinates[i][n][0] +
+        gridConfigs.offsetX +
+        gridConfigs.translateCtx[0],
+      gridConfigs.canvasParams.height +
+        gridConfigs.translateCtx[1] +
+        gridConfigs.offsetY / 3
+    );
+    //--
+  }
+  //--
+  //ctx.translate(-gridConfigs.translateCtx[0], -gridConfigs.translateCtx[1]);
 
   //--Another ball--
-  const ball2 = new stat_ball(
+  /*const ball2 = new stat_ball(
     ctx,
     1,
     40,
@@ -255,7 +447,7 @@ window.addEventListener("load", () => {
     10,
     [100, 0, 140, 0.6]
   );
-  all_balls_pos.push(ball2.getstatBallYx());
+  all_balls_pos.push(ball2.getstatBallYx());*/
   //---canvas mouse events--
   canvas.addEventListener("mousemove", onPosition);
   //--
@@ -264,12 +456,12 @@ window.addEventListener("load", () => {
 
     const mousePoint = {
       x: e.clientX - canvas.offsetLeft,
-      y: e.clientY - canvas.offsetTop,
+      y: e.clientY - canvas.offsetTop
     };
 
     const mousePointG = {
       x: e.clientX,
-      y: e.clientY,
+      y: e.clientY
     };
     //--
     for (var i = 0; i < all_balls_pos.length; i++) {
@@ -296,4 +488,5 @@ window.addEventListener("load", () => {
       circle.radius
     );
   }
+  //------------
 });
